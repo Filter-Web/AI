@@ -1,0 +1,25 @@
+<!DOCTYPE html>
+<html>
+<head>
+	<title>Home Page</title>
+</head>
+<body>
+	<div>
+		<h2>Home Page for ML Apps</h2>
+	</div>
+
+	<div>
+		<form method="POST" action="{{ url_for('predict') }}"> <!-- action= "/preict" -->
+			<input type="text" name="firstname" placeholder="FirstName">
+			<input type="text" name="lastname" placeholder="LastName">
+			<button type="reset">Clear</button>
+			<button type="submit">Submit</button>
+
+		</form>
+	</div>
+
+	<div>
+		<p>당신의 이름은 {{firstname}} 이고 성은 {{lastname}} 입니다</p>
+	</div>
+</body>
+</html>

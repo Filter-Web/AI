@@ -1,3 +1,7 @@
+*temp*.py
+templates/*temp*.html
+49_Greeting_peoplegreeting_49_25.jpg
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]

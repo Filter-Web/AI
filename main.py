@@ -5,18 +5,27 @@ import cv2
 # Issue Solved: occlusion(indirectly using aspect ratio),
 #               two or more objects,
 #               size (using aspect ratio)
-# Issue Solving: rotation, range over
+#               range over (crop overlay_image)
+# Issue Solving: rotation
 
 def overlay(image, x, y, w, h, overlay_image):
-    alpha = overlay_image[:, :, 3]
-    masked_image = alpha / 255 * 0.7
+    # image's cordinate
+    y_start, y_end = max(0, y - h), min(image.shape[0], y + h) # image's shape !!: y, x
+    x_start, x_end = max(0, x - w), min(image.shape[1], x + w) # image's shape !!: y, x
+    # crop overlay image
+    overlay_y_start, overlay_y_end = max(0, 0 - (y - h)), min(h * 2, h * 2 + (image.shape[0] - (y + h)))
+    overlay_x_start, overlay_x_end = max(0, 0 - (x - w)), min(w * 2, w * 2 + (image.shape[1] - (x + w)))
+    overlay_image = overlay_image[overlay_y_start:overlay_y_end, overlay_x_start:overlay_x_end, :]
+    # print(overlay_image.shape, w) # Debug
+    # for alpha
+    masked_image = overlay_image[:, :, 3] / 255
     for c in range(0, 3): # BGR
-        image[y-h:y+h, x-w:x+w, c] = (overlay_image[:, :, c] * masked_image) + (image[y-h:y+h, x-w:x+w, c] * (1-masked_image))
+        image[y_start:y_end, x_start:x_end, c] = (overlay_image[:, :, c] * masked_image) + (image[y_start:y_end, x_start:x_end, c] * (1-masked_image))
 
 # upload all related filters
-left_init = cv2.imread('filter_left.png', cv2.IMREAD_UNCHANGED)
-right_init = cv2.imread('filter_right.png', cv2.IMREAD_UNCHANGED)
-center_init = cv2.imread('filter_center.png', cv2.IMREAD_UNCHANGED)
+left_init = cv2.imread('filter/filter_left.png', cv2.IMREAD_UNCHANGED)
+right_init = cv2.imread('filter/filter_right.png', cv2.IMREAD_UNCHANGED)
+center_init = cv2.imread('filter/filter_center.png', cv2.IMREAD_UNCHANGED)
 
 video_capture = cv2.VideoCapture(0)
 video_capture.set(3, 640)

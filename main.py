@@ -9,6 +9,7 @@ import cv2
 # Issue Solving: rotation
 
 def overlay(image, x, y, w, h, overlay_image):
+    print(image.shape)
     # image's cordinate
     y_start, y_end = max(0, y - h), min(image.shape[0], y + h) # image's shape !!: y, x
     x_start, x_end = max(0, x - w), min(image.shape[1], x + w) # image's shape !!: y, x

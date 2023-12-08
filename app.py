@@ -1,16 +1,10 @@
 # app.py
-# https://ejleep1.tistory.com/1003
-# https://velog.io/@bangsy/Python-OpenCV3
-# https://tech.kakaopay.com/post/image-processing-server-framework/
-# https://wikidocs.net/215181
-from flask import Flask, render_template, Response
+from flask import Flask, render_template, Response, request
+from flask_cors import CORS
 import cv2
 from face_detector import YoloDetector
-import time
-import datetime
 import numpy as np
-
-app = Flask(__name__)
+from PIL import Image
 
 # model = torch.hub.load('ultralytics/yolov5', 'yolov5s', pretrained=True)/
 model = YoloDetector(target_size=720, device="cuda:0", min_face=90)
@@ -84,53 +78,36 @@ def process_center(frame, bboxes, points):
                         (int)(y1 - img_size)]
             overlay(frame, *center_loc, img_size, img_size, center)
 
+def gen_frames(frame):
+    # print(frame)
+    bboxes, points = model(frame)
+    process_side(frame, bboxes[0], points[0])
+    buffer = Image.fromarray(cv2.cvtColor(frame, cv2.COLOR_BGR2RGB))
+    frame = buffer.tobytes()
+    yield (b'--frame\r\n'
+            b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
+
+app = Flask(__name__)
+cors = CORS(app, resources={r"/*": {"origins": "*"}})
+
 @app.route('/')
-def index():
-    """Video streaming home page."""
-    now = datetime.datetime.now()
-    timeString = now.strftime("%Y-%m-%d %H:%M")
-    templateData = {
-        'title':'Image Streaming',
-        'time': timeString
-        }
-    return render_template('index.html', **templateData)
+def root():
+    return 'welcome to flask'
 
-def gen_frames():
-    camera = cv2.VideoCapture(0)
-    time.sleep(0.2)
-    lastTime = time.time()*1000.0
+@app.route('/api/receiveWebcamStream', methods=['POST'])
+def receive_webcam_stream():
+    webcam_data = request.data
+    # webcam_data를 처리하는 로직 추가
+    pil_image = Image.frombytes('RGBA', (1280, 720), webcam_data)
+    image = cv2.cvtColor(np.array(pil_image), cv2.COLOR_RGBA2BGR)
+    image_path = 'received_image.png'
+    cv2.imwrite(image_path, image)
 
-    while True:
-        _, frame = camera.read()
-        # gray = cv2.cvtColor(image, cv2.COLOR_BGR2GRAY)
-        bboxes, points = model(frame)
-        print(bboxes)
-        delt = time.time()*1000.0-lastTime
-        s = str(int(delt))
-        #print (delt," Found {0} faces!".format(len(faces)) )
-        lastTime = time.time()*1000.0
-        # Draw a rectangle around the faces
-
-        # process_base(frame, bboxes[0], points[0])
-        process_side(frame, bboxes[0], points[0])
-
-        now = datetime.datetime.now()
-        timeString = now.strftime("%Y-%m-%d %H:%M")
-        cv2.putText(frame, timeString, (10, 45),cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
-        # cv2.imshow("Frame", frame)
-        # key = cv2.waitKey(1) & 0xFF # if the `q` key was pressed, break from the loop
-        # if key == ord("q"):
-        #     break
-
-        _, buffer = cv2.imencode('.jpg', frame)
-        frame = buffer.tobytes()
-        yield (b'--frame\r\n'
-               b'Content-Type: image/jpeg\r\n\r\n' + frame + b'\r\n')
-
-@app.route('/video_feed')
-def video_feed():
-    """Video streaming route. Put this in the src attribute of an img tag."""
-    return Response(gen_frames(), mimetype='multipart/x-mixed-replace; boundary=frame')
+    # generate
+    bboxes, points = model(image)
+    process_base(image, bboxes[0], points[0])
+    processed_pil_image = Image.fromarray(cv2.cvtColor(image, cv2.COLOR_BGR2RGBA))
+    return Response(processed_pil_image.tobytes(), mimetype='multipart/x-mixed-replace; boundary=frame')
 
 if __name__ == '__main__':
-    app.run(host='0.0.0.0')
+    app.run(host='0.0.0.0',debug=True)

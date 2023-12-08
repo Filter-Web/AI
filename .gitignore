@@ -1,6 +1,8 @@
 *temp*.py
 templates/*temp*.html
 49_Greeting_peoplegreeting_49_25.jpg
+backup/
+Test_Filter_*.jpg
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

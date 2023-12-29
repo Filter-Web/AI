@@ -13,3 +13,5 @@ yolo face detecotr: [elyha7/yoloface](https://github.com/elyha7/yoloface)에서 
 - Spring Boot와 Flask 연결
 - 클라우드 서비스로 배포
 - Filter 디자인
+
+https://youtu.be/gSwZYu5rKVE?si=erqWTBAQr5cHVuWR
